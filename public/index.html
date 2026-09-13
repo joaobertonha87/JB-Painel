@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#080b0a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Painel JB">
+  <meta name="description" content="Agenda, alunos, conteúdo e aplicativos JB em um só lugar.">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="stylesheet" href="/styles.css">
+  <title>Meu Painel JB</title>
+</head>
+<body>
+  <main class="shell">
+    <section class="app">
+      <header class="topbar">
+        <button class="logo" data-view="home" aria-label="Ir para hoje">JB</button>
+        <div><small>MEU PAINEL</small><h1 id="greeting">Olá 👋</h1></div>
+        <button class="round" id="logout" aria-label="Sair">↪</button>
+      </header>
+
+      <button id="error" class="error hidden"></button>
+
+      <div class="pages">
+        <section class="page active" id="home-page">
+          <article class="today-card">
+            <div class="card-head"><div><small>HOJE</small><h2 id="today-label"></h2></div><b id="today-count">0</b></div>
+            <div id="today-list"></div>
+          </article>
+
+          <section>
+            <div class="section-title"><small>ACESSO RÁPIDO</small><h2>O que vamos fazer?</h2></div>
+            <div class="quick-grid">
+              <button data-create="agenda"><i class="green">▣</i><strong>Novo compromisso</strong><span>Agende aula ou tarefa</span></button>
+              <button data-create="student"><i class="blue">◉</i><strong>Novo aluno</strong><span>Cadastre em segundos</span></button>
+              <button data-create="content"><i class="orange">✦</i><strong>Anotar ideia</strong><span>Reel, post ou Story</span></button>
+              <button data-view="app"><i class="purple">◆</i><strong>Abrir Apps JB</strong><span>Todos os seus projetos</span></button>
+            </div>
+          </section>
+
+          <section class="overview">
+            <button data-view="student"><span>♙</span><div><b id="student-count">0</b><small>alunos</small></div><em>›</em></button>
+            <button data-view="content"><span>▤</span><div><b id="content-count">0</b><small>ideias pendentes</small></div><em>›</em></button>
+          </section>
+        </section>
+
+        <section class="page" id="agenda-page">
+          <div class="page-title"><small>ORGANIZAÇÃO</small><h2>Agenda</h2><p>Aulas, tarefas e lembretes em um só lugar.</p></div>
+          <button class="primary" data-create="agenda">＋ Novo compromisso</button>
+          <div class="records" id="agenda-list"></div>
+        </section>
+
+        <section class="page" id="student-page">
+          <div class="page-title"><small>BEACH TENNIS</small><h2>Alunos e aulas</h2><p>Acompanhe rapidamente quem treina com você.</p></div>
+          <button class="primary" data-create="student">＋ Cadastrar aluno</button>
+          <div class="records" id="student-list"></div>
+        </section>
+
+        <section class="page" id="content-page">
+          <div class="page-title"><small>CRIAÇÃO</small><h2>Planejamento</h2><p>Ideias de conteúdo prontas para sair do papel.</p></div>
+          <button class="primary" data-create="content">＋ Nova ideia</button>
+          <div class="records" id="content-list"></div>
+        </section>
+
+        <section class="page" id="app-page">
+          <div class="page-title"><small>ECOSSISTEMA JB</small><h2>Aplicativos JB</h2><p>Abra todos os seus projetos por um único painel.</p></div>
+          <div class="apps" id="apps-list"></div>
+          <button class="notify-card" id="enable-notifications">
+            <i>◉</i><div><strong>Ativar lembretes no iPhone</strong><span>Receba avisos dos compromissos agendados.</span></div><em>›</em>
+          </button>
+          <article class="install-card"><i>⇧</i><div><strong>Instale na Tela de Início</strong><p>No Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.</p></div></article>
+        </section>
+      </div>
+
+      <nav class="bottom-nav">
+        <button class="active" data-view="home"><i>⌂</i><span>Hoje</span></button>
+        <button data-view="agenda"><i>▣</i><span>Agenda</span></button>
+        <button data-view="student"><i>♙</i><span>Alunos</span></button>
+        <button data-view="content"><i>✦</i><span>Conteúdo</span></button>
+        <button data-view="app"><i>◆</i><span>Apps JB</span></button>
+      </nav>
+    </section>
+  </main>
+
+  <dialog id="entry-dialog">
+    <form id="entry-form">
+      <button type="button" class="dialog-close" aria-label="Fechar">×</button>
+      <small id="dialog-kicker">NOVO</small>
+      <h2 id="dialog-title">Adicionar</h2>
+      <p id="dialog-description"></p>
+      <input type="hidden" name="category" id="category">
+      <input type="hidden" name="itemId" id="item-id">
+      <label id="title-label">Título<input name="title" id="title" autocomplete="off" required></label>
+      <label id="details-label">Detalhes<textarea name="details" id="details" rows="3"></textarea></label>
+      <div class="form-row" id="date-row">
+        <label>Data<input name="date" id="date" type="date"></label>
+        <label>Horário<input name="time" id="time" type="time"></label>
+      </div>
+      <label id="reminder-row">Lembrete
+        <select name="reminderMinutes" id="reminder">
+          <option value="">Sem notificação</option><option value="5">5 minutos antes</option>
+          <option value="15">15 minutos antes</option><option value="30">30 minutos antes</option>
+          <option value="60">1 hora antes</option>
+        </select>
+      </label>
+      <label id="url-row">Link do aplicativo<input name="url" id="url" type="url" inputmode="url" placeholder="https://..."></label>
+      <button class="primary submit" type="submit" id="save">Salvar</button>
+    </form>
+  </dialog>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
