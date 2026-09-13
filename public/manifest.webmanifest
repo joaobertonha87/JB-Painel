@@ -1,7 +1,7 @@
 {
   "name": "Meu Painel JB",
   "short_name": "Painel JB",
-  "description": "Agenda, alunos, conteúdo e aplicativos JB.",
+  "description": "Agenda, alunos, turmas, conteúdo e aplicativos JB.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#060807",

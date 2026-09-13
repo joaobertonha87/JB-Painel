@@ -98,6 +98,22 @@ async function initializeDatabase() {
       subscription JSONB NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    CREATE TABLE IF NOT EXISTS classes (
+      id BIGSERIAL PRIMARY KEY,
+      weekday SMALLINT NOT NULL CHECK (weekday BETWEEN 0 AND 6),
+      class_time TIME NOT NULL,
+      capacity SMALLINT NOT NULL DEFAULT 4 CHECK (capacity = 4),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (weekday, class_time)
+    );
+    CREATE TABLE IF NOT EXISTS class_students (
+      class_id BIGINT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+      student_id BIGINT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (class_id, student_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_classes_schedule ON classes(weekday, class_time);
+    CREATE INDEX IF NOT EXISTS idx_class_students_student ON class_students(student_id);
   `);
 }
 
@@ -178,6 +194,117 @@ app.patch("/api/items/:id", requireAuth, async (request, response, next) => {
 app.delete("/api/items/:id", requireAuth, async (request, response, next) => {
   try {
     await pool.query("DELETE FROM items WHERE id=$1", [Number(request.params.id)]);
+    response.json({ ok: true });
+  } catch (error) { next(error); }
+});
+
+function classPayload(body = {}) {
+  const weekday = Number(body.weekday);
+  const time = String(body.time || "");
+  const rawStudentIds = Array.isArray(body.studentIds) ? body.studentIds : [];
+  const normalizedStudentIds = rawStudentIds.map(Number);
+  if (normalizedStudentIds.some((id) => !Number.isInteger(id) || id <= 0)) {
+    return { error: "A seleção de alunos é inválida." };
+  }
+  const studentIds = [...new Set(normalizedStudentIds)];
+  if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6 || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+    return { error: "Informe um dia e horário válidos." };
+  }
+  if (studentIds.length > 4) return { error: "Cada turma pode ter no máximo 4 alunos." };
+  return { weekday, time, studentIds };
+}
+
+async function validateStudents(client, studentIds) {
+  if (!studentIds.length) return true;
+  const result = await client.query(
+    "SELECT COUNT(*)::int AS count FROM items WHERE category='student' AND id = ANY($1::bigint[])",
+    [studentIds],
+  );
+  return result.rows[0].count === studentIds.length;
+}
+
+app.get("/api/classes", requireAuth, async (_request, response, next) => {
+  try {
+    const result = await pool.query(`
+      SELECT c.id, c.weekday, LEFT(c.class_time::text, 5) AS time, c.capacity,
+        COALESCE(
+          json_agg(json_build_object('id', i.id, 'name', i.title) ORDER BY i.title)
+            FILTER (WHERE i.id IS NOT NULL),
+          '[]'::json
+        ) AS students
+      FROM classes c
+      LEFT JOIN class_students cs ON cs.class_id = c.id
+      LEFT JOIN items i ON i.id = cs.student_id AND i.category = 'student'
+      GROUP BY c.id
+      ORDER BY c.weekday, c.class_time
+    `);
+    response.json({ classes: result.rows });
+  } catch (error) { next(error); }
+});
+
+app.post("/api/classes", requireAuth, async (request, response, next) => {
+  const payload = classPayload(request.body);
+  if (payload.error) return response.status(400).json({ error: payload.error });
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    if (!await validateStudents(client, payload.studentIds)) {
+      await client.query("ROLLBACK");
+      return response.status(400).json({ error: "Um dos alunos selecionados não foi encontrado." });
+    }
+    const created = await client.query(
+      "INSERT INTO classes (weekday, class_time) VALUES ($1,$2) RETURNING id",
+      [payload.weekday, payload.time],
+    );
+    for (const studentId of payload.studentIds) {
+      await client.query("INSERT INTO class_students (class_id, student_id) VALUES ($1,$2)", [created.rows[0].id, studentId]);
+    }
+    await client.query("COMMIT");
+    response.status(201).json({ id: created.rows[0].id });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    if (error.code === "23505") return response.status(409).json({ error: "Já existe uma turma nesse dia e horário." });
+    next(error);
+  } finally { client.release(); }
+});
+
+app.patch("/api/classes/:id", requireAuth, async (request, response, next) => {
+  const id = Number(request.params.id);
+  const payload = classPayload(request.body);
+  if (!Number.isInteger(id) || payload.error) return response.status(400).json({ error: payload.error || "Turma inválida." });
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    if (!await validateStudents(client, payload.studentIds)) {
+      await client.query("ROLLBACK");
+      return response.status(400).json({ error: "Um dos alunos selecionados não foi encontrado." });
+    }
+    const updated = await client.query(
+      "UPDATE classes SET weekday=$1, class_time=$2 WHERE id=$3 RETURNING id",
+      [payload.weekday, payload.time, id],
+    );
+    if (!updated.rowCount) {
+      await client.query("ROLLBACK");
+      return response.status(404).json({ error: "Turma não encontrada." });
+    }
+    await client.query("DELETE FROM class_students WHERE class_id=$1", [id]);
+    for (const studentId of payload.studentIds) {
+      await client.query("INSERT INTO class_students (class_id, student_id) VALUES ($1,$2)", [id, studentId]);
+    }
+    await client.query("COMMIT");
+    response.json({ ok: true });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    if (error.code === "23505") return response.status(409).json({ error: "Já existe uma turma nesse dia e horário." });
+    next(error);
+  } finally { client.release(); }
+});
+
+app.delete("/api/classes/:id", requireAuth, async (request, response, next) => {
+  try {
+    const id = Number(request.params.id);
+    if (!Number.isInteger(id)) return response.status(400).json({ error: "Turma inválida." });
+    await pool.query("DELETE FROM classes WHERE id=$1", [id]);
     response.json({ ok: true });
   } catch (error) { next(error); }
 });

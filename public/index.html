@@ -7,11 +7,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Painel JB">
-  <meta name="description" content="Agenda, alunos, conteúdo e aplicativos JB em um só lugar.">
+  <meta name="description" content="Agenda, alunos, turmas, conteúdo e aplicativos JB em um só lugar.">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css?v=turmas-4">
   <title>Meu Painel JB</title>
 </head>
 <body>
@@ -19,6 +19,7 @@
     <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
     <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/><path d="M8 13h3v3H8z"/></symbol>
     <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0M14 15a4.5 4.5 0 0 1 6.5 4"/></symbol>
     <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 1.35 5.65L19 9l-5.65 1.35L12 16l-1.35-5.65L5 9l5.65-1.35zM19 16l.65 2.35L22 19l-2.35.65L19 22l-.65-2.35L16 19l2.35-.65z"/></symbol>
     <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
     <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 5H5v14h5M14 8l4 4-4 4m4-4H9"/></symbol>
@@ -36,15 +37,16 @@
         <header class="topbar">
           <button class="logo" data-view="home" aria-label="Ir para hoje">JB</button>
           <div class="topbar-copy"><small>JB WORKSPACE <span>• ONLINE</span></small><h1 id="greeting">Olá 👋</h1></div>
-          <button class="round" id="logout" aria-label="Sair"><svg><use href="#i-logout"/></svg></button>
+          <button class="round" id="logout" aria-label="Sair"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-logout"/></svg></button>
         </header>
 
         <nav class="top-nav" aria-label="Navegação principal">
-          <button class="active" data-view="home"><i><svg><use href="#i-home"/></svg></i><span>Hoje</span></button>
-          <button data-view="agenda"><i><svg><use href="#i-calendar"/></svg></i><span>Agenda</span></button>
-          <button data-view="student"><i><svg><use href="#i-user"/></svg></i><span>Alunos</span></button>
-          <button data-view="content"><i><svg><use href="#i-spark"/></svg></i><span>Conteúdo</span></button>
-          <button data-view="app"><i><svg><use href="#i-grid"/></svg></i><span>Apps JB</span></button>
+          <button class="active" data-view="home"><i><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-home"/></svg></i><span>Hoje</span></button>
+          <button data-view="agenda"><i><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-calendar"/></svg></i><span>Agenda</span></button>
+          <button data-view="student"><i><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-user"/></svg></i><span>Alunos</span></button>
+          <button data-view="class"><i><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-users"/></svg></i><span>Turmas</span></button>
+          <button data-view="content"><i><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-spark"/></svg></i><span>Conteúdo</span></button>
+          <button data-view="app"><i><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-grid"/></svg></i><span>Apps JB</span></button>
         </nav>
       </div>
 
@@ -61,16 +63,16 @@
           <section>
             <div class="section-title"><small>ACESSO RÁPIDO</small><h2>O que vamos fazer?</h2></div>
             <div class="quick-grid">
-              <button class="quick-agenda" data-create="agenda"><i class="green"><svg><use href="#i-calendar"/></svg></i><strong>Novo compromisso</strong><span>Agende aula ou tarefa</span><em>＋</em></button>
-              <button class="quick-student" data-create="student"><i class="blue"><svg><use href="#i-user"/></svg></i><strong>Novo aluno</strong><span>Cadastre em segundos</span><em>＋</em></button>
-              <button class="quick-content" data-create="content"><i class="orange"><svg><use href="#i-spark"/></svg></i><strong>Anotar ideia</strong><span>Reel, post ou Story</span><em>＋</em></button>
-              <button class="quick-apps" data-view="app"><i class="purple"><svg><use href="#i-grid"/></svg></i><strong>Abrir Apps JB</strong><span>Todos os seus projetos</span><em>→</em></button>
+              <button class="quick-agenda" data-create="agenda"><i class="green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-calendar"/></svg></i><strong>Novo compromisso</strong><span>Agende aula ou tarefa</span><em>＋</em></button>
+              <button class="quick-student" data-create="student"><i class="blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-user"/></svg></i><strong>Novo aluno</strong><span>Cadastre em segundos</span><em>＋</em></button>
+              <button class="quick-content" data-create="content"><i class="orange"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-spark"/></svg></i><strong>Anotar ideia</strong><span>Reel, post ou Story</span><em>＋</em></button>
+              <button class="quick-apps" data-view="app"><i class="purple"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-grid"/></svg></i><strong>Abrir Apps JB</strong><span>Todos os seus projetos</span><em>→</em></button>
             </div>
           </section>
 
           <section class="overview">
-            <button data-view="student"><span><svg><use href="#i-user"/></svg></span><div><b id="student-count">0</b><small>alunos ativos</small></div><em>›</em></button>
-            <button data-view="content"><span><svg><use href="#i-spark"/></svg></span><div><b id="content-count">0</b><small>ideias pendentes</small></div><em>›</em></button>
+            <button data-view="student"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-user"/></svg></span><div><b id="student-count">0</b><small>alunos ativos</small></div><em>›</em></button>
+            <button data-view="content"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-spark"/></svg></span><div><b id="content-count">0</b><small>ideias pendentes</small></div><em>›</em></button>
           </section>
         </section>
 
@@ -86,6 +88,16 @@
           <div class="records" id="student-list"></div>
         </section>
 
+        <section class="page" id="class-page">
+          <div class="page-title"><small>GRADE SEMANAL</small><h2>Turmas</h2><p>Organize horários, alunos inscritos e vagas disponíveis.</p></div>
+          <section class="class-summary">
+            <div><small>TURMAS</small><strong id="class-count">0</strong></div>
+            <div><small>VAGAS LIVRES</small><strong id="vacancy-count">0</strong></div>
+          </section>
+          <button class="primary" data-create="class">＋ Nova turma</button>
+          <div class="classes" id="class-list"></div>
+        </section>
+
         <section class="page" id="content-page">
           <div class="page-title"><small>CRIAÇÃO</small><h2>Planejamento</h2><p>Ideias de conteúdo prontas para sair do papel.</p></div>
           <button class="primary" data-create="content">＋ Nova ideia</button>
@@ -96,9 +108,9 @@
           <div class="page-title"><small>ECOSSISTEMA JB</small><h2>Aplicativos JB</h2><p>Abra todos os seus projetos por um único painel.</p></div>
           <div class="apps" id="apps-list"></div>
           <button class="notify-card" id="enable-notifications">
-            <i><svg><use href="#i-bell"/></svg></i><div><strong>Ativar lembretes no iPhone</strong><span>Receba avisos dos compromissos agendados.</span></div><em>›</em>
+            <i><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bell"/></svg></i><div><strong>Ativar lembretes no iPhone</strong><span>Receba avisos dos compromissos agendados.</span></div><em>›</em>
           </button>
-          <article class="install-card"><i><svg><use href="#i-upload"/></svg></i><div><strong>Instale na Tela de Início</strong><p>No Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.</p></div></article>
+          <article class="install-card"><i><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-upload"/></svg></i><div><strong>Instale na Tela de Início</strong><p>No Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.</p></div></article>
         </section>
       </div>
 
@@ -119,6 +131,22 @@
         <label>Data<input name="date" id="date" type="date"></label>
         <label>Horário<input name="time" id="time" type="time"></label>
       </div>
+      <div class="form-row hidden" id="class-schedule-row">
+        <label>Dia da semana
+          <select name="weekday" id="weekday">
+            <option value="1">Segunda-feira</option><option value="2">Terça-feira</option>
+            <option value="3">Quarta-feira</option><option value="4">Quinta-feira</option>
+            <option value="5">Sexta-feira</option><option value="6">Sábado</option>
+            <option value="0">Domingo</option>
+          </select>
+        </label>
+        <label>Horário<input name="classTime" id="class-time" type="time"></label>
+      </div>
+      <fieldset class="student-picker hidden" id="class-students-row">
+        <legend>Alunos da turma <span>máximo de 4</span></legend>
+        <div id="class-student-options"></div>
+        <small id="class-selection-count">0 de 4 selecionados</small>
+      </fieldset>
       <label id="reminder-row">Lembrete
         <select name="reminderMinutes" id="reminder">
           <option value="">Sem notificação</option><option value="5">5 minutos antes</option>
@@ -131,6 +159,6 @@
     </form>
   </dialog>
 
-  <script src="/app.js" defer></script>
+  <script src="/app.js?v=turmas-4" defer></script>
 </body>
 </html>
