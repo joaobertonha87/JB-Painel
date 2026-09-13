@@ -1,5 +1,5 @@
 const state = { items: [], classes: [], view: "home", appTarget: "", classTarget: null };
-const appNames = ["JB Play", "BT Tracker", "JB Drills", "JB Tactics"];
+const appNames = ["JB Play", "JB Tactics", "JB Torneios"];
 const weekdayNames = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 const dialogCopy = {
   agenda: ["AGENDA", "Novo compromisso", "Adicione uma aula, tarefa ou lembrete."],
