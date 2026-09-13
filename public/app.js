@@ -1,11 +1,15 @@
-const state = { items: [], classes: [], view: "home", appTarget: "", classTarget: null };
+const state = { items: [], classes: [], view: "home", appTarget: "", classTarget: null, classMode: "particular" };
 const appNames = ["JB Play", "JB Tactics", "JB Torneios"];
 const weekdayNames = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+const classModes = {
+  particular: { label: "Particular", capacity: 4, duration: 60, durationLabel: "1 hora" },
+  school: { label: "Escolinha", capacity: 6, duration: 35, durationLabel: "35 minutos" },
+};
 const dialogCopy = {
   agenda: ["AGENDA", "Novo compromisso", "Adicione uma aula, tarefa ou lembrete."],
   student: ["ALUNOS", "Novo aluno", "Cadastre o aluno e o nível atual."],
   content: ["CONTEÚDO", "Nova ideia", "Guarde uma ideia para post, Story ou Reel."],
-  class: ["TURMAS", "Nova turma", "Escolha o dia, horário e até 4 alunos."],
+  class: ["TURMAS", "Nova turma", "Escolha o dia, horário e os alunos desta modalidade."],
   app: ["APLICATIVO", "Configurar atalho", "Cole o endereço para abrir pelo painel."],
 };
 
@@ -26,6 +30,12 @@ function formatDate(value) {
   if (!value) return "";
   return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" })
     .format(new Date(`${dateValue(value)}T12:00:00`)).replace(".", "");
+}
+
+function formatEndTime(time, duration) {
+  const [hours, minutes] = String(time || "00:00").split(":").map(Number);
+  const total = (hours * 60 + minutes + duration) % (24 * 60);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
 function escapeHtml(value = "") {
@@ -80,10 +90,12 @@ function empty(title, text) {
 function record(item) {
   const icon = item.category === "agenda" ? "i-calendar" : item.category === "student" ? "i-user" : "i-spark";
   const when = [formatDate(item.date), item.time].filter(Boolean).join(" • ");
+  const studentMode = item.category === "student" ? (classModes[item.studentType] || classModes.particular).label : "";
   return `<article class="record">
     <i class="record-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#${icon}"/></svg></i>
     <div class="record-copy"><strong>${escapeHtml(item.title)}</strong>
       <span>${escapeHtml(item.details || "Sem observações")}</span>
+      ${studentMode ? `<small class="student-mode">${studentMode}</small>` : ""}
       ${when ? `<small>${escapeHtml(when)}</small>` : ""}
     </div>
     <div class="record-actions">
@@ -95,14 +107,16 @@ function record(item) {
 
 function classCard(group) {
   const students = Array.isArray(group.students) ? group.students : [];
-  const capacity = Number(group.capacity) || 4;
+  const mode = classModes[group.classType] || classModes.particular;
+  const capacity = Number(group.capacity) || mode.capacity;
   const available = Math.max(0, capacity - students.length);
+  const endTime = formatEndTime(group.time, mode.duration);
   const chips = students.map((student) => `<span class="student-chip">${escapeHtml(student.name)}</span>`).join("");
   const vacancies = available ? `<span class="student-chip vacant">${available} ${available === 1 ? "vaga" : "vagas"}</span>` : "";
   return `<article class="class-card">
     <div class="class-card-head">
-      <div class="class-time">${escapeHtml(group.time)}</div>
-      <div class="class-card-copy"><strong>${weekdayNames[Number(group.weekday)]}</strong><small>Turma de Beach Tennis</small></div>
+      <div class="class-time"><strong>${escapeHtml(group.time)}</strong><small>até ${endTime}</small></div>
+      <div class="class-card-copy"><strong>${weekdayNames[Number(group.weekday)]}</strong><small>${mode.label} • ${mode.durationLabel}</small></div>
       <span class="class-occupancy">${students.length}/${capacity}</span>
     </div>
     <div class="class-students">${chips || ""}${vacancies || `<span class="student-chip vacant">Turma completa</span>`}</div>
@@ -118,19 +132,27 @@ function classCard(group) {
 
 function updateClassSelectionCount() {
   const checked = $$("#class-student-options input:checked");
-  $("#class-selection-count").textContent = `${checked.length} de 4 selecionados`;
+  const classType = $("#class-type").value || state.classMode;
+  const capacity = (classModes[classType] || classModes.particular).capacity;
+  $("#class-selection-count").textContent = `${checked.length} de ${capacity} selecionados`;
 }
 
-function renderStudentPicker(selectedIds = []) {
+function renderStudentPicker(selectedIds = [], classType = state.classMode) {
   const selected = new Set(selectedIds.map(Number));
-  const students = state.items.filter((item) => item.category === "student")
+  const students = state.items.filter((item) => item.category === "student" && (item.studentType || "particular") === classType)
     .sort((a, b) => a.title.localeCompare(b.title, "pt-BR"));
   $("#class-student-options").innerHTML = students.length ? students.map((student) => `
     <label class="student-option">
       <input type="checkbox" name="classStudent" value="${student.id}" ${selected.has(Number(student.id)) ? "checked" : ""}>
       <span>${escapeHtml(student.title)}</span>
-    </label>`).join("") : `<p class="picker-empty">Cadastre os alunos primeiro para adicioná-los à turma.</p>`;
+    </label>`).join("") : `<p class="picker-empty">Cadastre alunos da modalidade ${(classModes[classType] || classModes.particular).label} para adicioná-los aqui.</p>`;
   updateClassSelectionCount();
+}
+
+function updateClassModeNote(classType) {
+  const mode = classModes[classType] || classModes.particular;
+  const startTime = $("#class-time").value || "18:00";
+  $("#class-mode-note").innerHTML = `<div><strong>${mode.label}</strong><span>${mode.durationLabel} • até ${mode.capacity} alunos</span></div><b>${startTime}–${formatEndTime(startTime, mode.duration)}</b>`;
 }
 
 function render() {
@@ -142,8 +164,12 @@ function render() {
   $("#today-count").textContent = todayAgenda.length;
   $("#student-count").textContent = students.length;
   $("#content-count").textContent = contents.length;
-  $("#class-count").textContent = state.classes.length;
-  $("#vacancy-count").textContent = state.classes.reduce((total, group) => total + Math.max(0, (Number(group.capacity) || 4) - (group.students?.length || 0)), 0);
+  const visibleClasses = state.classes.filter((group) => (group.classType || "particular") === state.classMode);
+  const activeMode = classModes[state.classMode];
+  $("#class-count").textContent = visibleClasses.length;
+  $("#vacancy-count").textContent = visibleClasses.reduce((total, group) => total + Math.max(0, (Number(group.capacity) || activeMode.capacity) - (group.students?.length || 0)), 0);
+  $("#new-class-button").textContent = `＋ Nova turma ${activeMode.label.toLowerCase()}`;
+  $$(".class-tabs button").forEach((button) => button.classList.toggle("active", button.dataset.classMode === state.classMode));
   $("#today-list").innerHTML = todayAgenda.length ? todayAgenda.slice(0, 3).map((item) => `
     <article class="today-item">
       <div class="time"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clock"/></svg><span>${escapeHtml(item.time || "--:--")}</span></div>
@@ -154,7 +180,7 @@ function render() {
   $("#agenda-list").innerHTML = agenda.length ? agenda.map(record).join("") : empty("Sua agenda está livre", "Adicione o primeiro compromisso para organizar o dia.");
   $("#student-list").innerHTML = students.length ? students.map(record).join("") : empty("Nenhum aluno cadastrado", "Cadastre seus alunos e registre o nível de cada um.");
   $("#content-list").innerHTML = contents.length ? contents.map(record).join("") : empty("Caixa de ideias vazia", "Anote aqui seu próximo Reel, Story ou publicação.");
-  $("#class-list").innerHTML = state.classes.length ? state.classes.map(classCard).join("") : empty("Nenhuma turma cadastrada", "Crie a primeira turma e selecione até 4 alunos.");
+  $("#class-list").innerHTML = visibleClasses.length ? visibleClasses.map(classCard).join("") : empty(`Nenhuma turma de ${activeMode.label.toLowerCase()}`, `Crie a primeira turma e selecione até ${activeMode.capacity} alunos.`);
 
   $("#apps-list").innerHTML = appNames.map((name, index) => {
     const saved = state.items.find((item) => item.category === "app" && item.title === name);
@@ -181,14 +207,19 @@ function openDialog(category, appTarget = "") {
   $("#title-label").classList.toggle("hidden", category === "app" || category === "class");
   $("#details-label").classList.toggle("hidden", category === "app" || category === "class");
   $("#date-row").classList.toggle("hidden", category === "student" || category === "app" || category === "class");
+  $("#student-type-row").classList.toggle("hidden", category !== "student");
   $("#class-schedule-row").classList.toggle("hidden", category !== "class");
   $("#class-students-row").classList.toggle("hidden", category !== "class");
+  $("#class-mode-note").classList.toggle("hidden", category !== "class");
   $("#reminder-row").classList.toggle("hidden", category !== "agenda");
   $("#url-row").classList.toggle("hidden", category !== "app");
   $("#title").required = category !== "app" && category !== "class";
   $("#url").required = category === "app";
   $("#class-time").required = category === "class";
   $("#date").value = category === "agenda" ? localDate() : "";
+  if (category === "student") {
+    $("#student-type-particular").checked = true;
+  }
   if (category === "app") {
     const existing = state.items.find((item) => item.category === "app" && item.title === appTarget);
     $("#item-id").value = existing?.id || "";
@@ -197,11 +228,15 @@ function openDialog(category, appTarget = "") {
   }
   if (category === "class") {
     const existing = state.classes.find((group) => Number(group.id) === state.classTarget);
+    const classType = existing?.classType || state.classMode;
+    const mode = classModes[classType] || classModes.particular;
     $("#item-id").value = existing?.id || "";
+    $("#class-type").value = classType;
     $("#weekday").value = existing?.weekday ?? "1";
     $("#class-time").value = existing?.time || "18:00";
-    renderStudentPicker(existing?.students?.map((student) => student.id) || []);
-    if (existing) $("#dialog-title").textContent = "Editar turma";
+    updateClassModeNote(classType);
+    renderStudentPicker(existing?.students?.map((student) => student.id) || [], classType);
+    $("#dialog-title").textContent = existing ? `Editar turma ${mode.label.toLowerCase()}` : `Nova turma ${mode.label.toLowerCase()}`;
   }
   $("#entry-dialog").showModal();
 }
@@ -210,6 +245,10 @@ document.addEventListener("click", async (event) => {
   const button = event.target.closest("button");
   if (!button) return;
   if (button.dataset.view) setView(button.dataset.view);
+  if (button.dataset.classMode) {
+    state.classMode = button.dataset.classMode;
+    render();
+  }
   if (button.dataset.create) openDialog(button.dataset.create);
   if (button.dataset.configureApp !== undefined) openDialog("app", appNames[Number(button.dataset.configureApp)]);
   if (button.dataset.editClass) openDialog("class", button.dataset.editClass);
@@ -239,12 +278,14 @@ $(".dialog-close").addEventListener("click", () => $("#entry-dialog").close());
 $("#class-student-options").addEventListener("change", (event) => {
   if (!event.target.matches('input[type="checkbox"]')) return;
   const checked = $$("#class-student-options input:checked");
-  if (checked.length > 4) {
+  const capacity = (classModes[$("#class-type").value] || classModes.particular).capacity;
+  if (checked.length > capacity) {
     event.target.checked = false;
-    showError("Cada turma pode ter no máximo 4 alunos.");
+    showError(`Esta modalidade permite no máximo ${capacity} alunos.`);
   }
   updateClassSelectionCount();
 });
+$("#class-time").addEventListener("input", () => updateClassModeNote($("#class-type").value));
 $("#error").addEventListener("click", load);
 $("#logout").addEventListener("click", async () => {
   await fetch("/api/logout", { method: "POST" });
@@ -261,6 +302,7 @@ $("#entry-form").addEventListener("submit", async (event) => {
   const id = form.get("itemId");
   if (category === "class") {
     const body = {
+      classType: form.get("classType"),
       weekday: Number(form.get("weekday")),
       time: form.get("classTime"),
       studentIds: form.getAll("classStudent").map(Number),
@@ -281,6 +323,7 @@ $("#entry-form").addEventListener("submit", async (event) => {
     category, title: form.get("title"), details: form.get("details"),
     date: form.get("date") || null, time: form.get("time") || null,
     reminderMinutes: form.get("reminderMinutes") ? Number(form.get("reminderMinutes")) : null,
+    studentType: category === "student" ? form.get("studentType") : null,
   };
   try {
     await api(id ? `/api/items/${id}` : "/api/items", {

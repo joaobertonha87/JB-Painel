@@ -11,7 +11,7 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
-  <link rel="stylesheet" href="/styles.css?v=turmas-5">
+  <link rel="stylesheet" href="/styles.css?v=horarios-7">
   <title>Meu Painel JB</title>
 </head>
 <body>
@@ -90,11 +90,15 @@
 
         <section class="page" id="class-page">
           <div class="page-title"><small>GRADE SEMANAL</small><h2>Turmas</h2><p>Organize horários, alunos inscritos e vagas disponíveis.</p></div>
+          <nav class="class-tabs" aria-label="Modalidade das turmas">
+            <button class="active" data-class-mode="particular"><strong>Particular</strong><span>1h • até 4 alunos</span></button>
+            <button data-class-mode="school"><strong>Escolinha</strong><span>35min • até 6 alunos</span></button>
+          </nav>
           <section class="class-summary">
             <div><small>TURMAS</small><strong id="class-count">0</strong></div>
             <div><small>VAGAS LIVRES</small><strong id="vacancy-count">0</strong></div>
           </section>
-          <button class="primary" data-create="class">＋ Nova turma</button>
+          <button class="primary" id="new-class-button" data-create="class">＋ Nova turma particular</button>
           <div class="classes" id="class-list"></div>
         </section>
 
@@ -125,8 +129,16 @@
       <p id="dialog-description"></p>
       <input type="hidden" name="category" id="category">
       <input type="hidden" name="itemId" id="item-id">
+      <input type="hidden" name="classType" id="class-type" value="particular">
       <label id="title-label">Título<input name="title" id="title" autocomplete="off" required></label>
       <label id="details-label">Detalhes<textarea name="details" id="details" rows="3"></textarea></label>
+      <fieldset class="mode-picker hidden" id="student-type-row">
+        <legend>Modalidade do aluno</legend>
+        <div>
+          <label><input type="radio" name="studentType" id="student-type-particular" value="particular" checked><span><strong>Particular</strong><small>Turmas de até 4</small></span></label>
+          <label><input type="radio" name="studentType" value="school"><span><strong>Escolinha</strong><small>Turmas de até 6</small></span></label>
+        </div>
+      </fieldset>
       <div class="form-row" id="date-row">
         <label>Data<input name="date" id="date" type="date"></label>
         <label>Horário<input name="time" id="time" type="time"></label>
@@ -142,8 +154,9 @@
         </label>
         <label>Horário<input name="classTime" id="class-time" type="time"></label>
       </div>
+      <div class="class-mode-note hidden" id="class-mode-note"></div>
       <fieldset class="student-picker hidden" id="class-students-row">
-        <legend>Alunos da turma <span>máximo de 4</span></legend>
+        <legend>Alunos da turma</legend>
         <div id="class-student-options"></div>
         <small id="class-selection-count">0 de 4 selecionados</small>
       </fieldset>
@@ -159,6 +172,6 @@
     </form>
   </dialog>
 
-  <script src="/app.js?v=turmas-5" defer></script>
+  <script src="/app.js?v=horarios-7" defer></script>
 </body>
 </html>

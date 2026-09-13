@@ -1,5 +1,5 @@
-const CACHE = "painel-jb-render-turmas-v5";
-const SHELL = ["/", "/styles.css?v=turmas-5", "/app.js?v=turmas-5", "/icon.svg", "/manifest.webmanifest"];
+const CACHE = "painel-jb-render-horarios-v7";
+const SHELL = ["/", "/styles.css?v=horarios-7", "/app.js?v=horarios-7", "/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
