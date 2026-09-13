@@ -66,7 +66,7 @@ async function load() {
 function setView(view) {
   state.view = view;
   $$(".page").forEach((page) => page.classList.toggle("active", page.id === `${view}-page`));
-  $$(".bottom-nav button").forEach((button) => button.classList.toggle("active", button.dataset.view === view));
+  $$(".top-nav button").forEach((button) => button.classList.toggle("active", button.dataset.view === view));
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -75,17 +75,17 @@ function empty(title, text) {
 }
 
 function record(item) {
-  const icon = item.category === "agenda" ? "▣" : item.category === "student" ? "♙" : "✦";
+  const icon = item.category === "agenda" ? "i-calendar" : item.category === "student" ? "i-user" : "i-spark";
   const when = [formatDate(item.date), item.time].filter(Boolean).join(" • ");
   return `<article class="record">
-    <i class="record-icon">${icon}</i>
+    <i class="record-icon"><svg><use href="#${icon}"/></svg></i>
     <div class="record-copy"><strong>${escapeHtml(item.title)}</strong>
       <span>${escapeHtml(item.details || "Sem observações")}</span>
       ${when ? `<small>${escapeHtml(when)}</small>` : ""}
     </div>
     <div class="record-actions">
-      ${item.category !== "student" ? `<button data-done="${item.id}" aria-label="Concluir">✓</button>` : ""}
-      <button class="delete" data-delete="${item.id}" aria-label="Excluir">⌫</button>
+      ${item.category !== "student" ? `<button data-done="${item.id}" aria-label="Concluir"><svg><use href="#i-check"/></svg></button>` : ""}
+      <button class="delete" data-delete="${item.id}" aria-label="Excluir"><svg><use href="#i-trash"/></svg></button>
     </div>
   </article>`;
 }
@@ -101,9 +101,9 @@ function render() {
   $("#content-count").textContent = contents.length;
   $("#today-list").innerHTML = todayAgenda.length ? todayAgenda.slice(0, 3).map((item) => `
     <article class="today-item">
-      <div class="time">◷<span>${escapeHtml(item.time || "--:--")}</span></div>
+      <div class="time"><svg><use href="#i-clock"/></svg><span>${escapeHtml(item.time || "--:--")}</span></div>
       <div class="item-copy"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.details || "Compromisso pessoal")}</span></div>
-      <button class="done" data-done="${item.id}" aria-label="Concluir">✓</button>
+      <button class="done" data-done="${item.id}" aria-label="Concluir"><svg><use href="#i-check"/></svg></button>
     </article>`).join("") : `<button class="empty-today" data-create="agenda"><strong>Seu dia está livre</strong><span>Toque para adicionar algo</span></button>`;
 
   $("#agenda-list").innerHTML = agenda.length ? agenda.map(record).join("") : empty("Sua agenda está livre", "Adicione o primeiro compromisso para organizar o dia.");
@@ -116,7 +116,7 @@ function render() {
     return `<article class="app-card">
       <i class="app-logo">${initials}</i>
       <div><strong>${name}</strong><small>${saved?.url ? "Atalho configurado" : "Adicione o link do aplicativo"}</small></div>
-      ${saved?.url ? `<span class="app-actions"><button data-configure-app="${index}" aria-label="Editar link">✎</button><a href="${escapeHtml(saved.url)}" target="_blank" rel="noreferrer" aria-label="Abrir ${name}">↗</a></span>`
+      ${saved?.url ? `<span class="app-actions"><button data-configure-app="${index}" aria-label="Editar link"><svg><use href="#i-edit"/></svg></button><a href="${escapeHtml(saved.url)}" target="_blank" rel="noreferrer" aria-label="Abrir ${name}"><svg><use href="#i-arrow"/></svg></a></span>`
         : `<button data-configure-app="${index}">Configurar</button>`}
     </article>`;
   }).join("");

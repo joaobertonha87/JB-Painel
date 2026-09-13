@@ -1,4 +1,4 @@
-const CACHE = "painel-jb-render-v1";
+const CACHE = "painel-jb-render-premium-v2";
 const SHELL = ["/", "/styles.css", "/app.js", "/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
