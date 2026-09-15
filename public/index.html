@@ -11,7 +11,7 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
-  <link rel="stylesheet" href="/styles.css?v=horarios-7">
+  <link rel="stylesheet" href="/styles.css?v=notas-8">
   <title>Meu Painel JB</title>
 </head>
 <body>
@@ -131,7 +131,8 @@
       <input type="hidden" name="itemId" id="item-id">
       <input type="hidden" name="classType" id="class-type" value="particular">
       <label id="title-label">Título<input name="title" id="title" autocomplete="off" required></label>
-      <label id="details-label">Detalhes<textarea name="details" id="details" rows="3"></textarea></label>
+      <label id="details-label"><span id="details-label-text">Detalhes</span><textarea name="details" id="details" rows="3"></textarea></label>
+      <div class="note-save-status hidden" id="note-save-status" aria-live="polite"></div>
       <fieldset class="mode-picker hidden" id="student-type-row">
         <legend>Modalidade do aluno</legend>
         <div>
@@ -172,6 +173,6 @@
     </form>
   </dialog>
 
-  <script src="/app.js?v=horarios-7" defer></script>
+  <script src="/app.js?v=notas-8" defer></script>
 </body>
 </html>

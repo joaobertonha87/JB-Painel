@@ -91,10 +91,12 @@ function record(item) {
   const icon = item.category === "agenda" ? "i-calendar" : item.category === "student" ? "i-user" : "i-spark";
   const when = [formatDate(item.date), item.time].filter(Boolean).join(" • ");
   const studentMode = item.category === "student" ? (classModes[item.studentType] || classModes.particular).label : "";
-  return `<article class="record">
+  const isNote = item.category === "content";
+  return `<article class="record${isNote ? " content-note" : ""}" ${isNote ? `data-open-note="${item.id}" role="button" tabindex="0" aria-label="Abrir e editar ${escapeHtml(item.title)}"` : ""}>
     <i class="record-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#${icon}"/></svg></i>
     <div class="record-copy"><strong>${escapeHtml(item.title)}</strong>
       <span>${escapeHtml(item.details || "Sem observações")}</span>
+      ${isNote ? `<small class="note-hint">TOQUE PARA ABRIR E EDITAR</small>` : ""}
       ${studentMode ? `<small class="student-mode">${studentMode}</small>` : ""}
       ${when ? `<small>${escapeHtml(when)}</small>` : ""}
     </div>
@@ -216,6 +218,13 @@ function openDialog(category, appTarget = "") {
   $("#title").required = category !== "app" && category !== "class";
   $("#url").required = category === "app";
   $("#class-time").required = category === "class";
+  $("#entry-dialog").classList.toggle("note-dialog", category === "content");
+  $("#entry-form").classList.toggle("note-mode", category === "content");
+  $("#details-label-text").textContent = category === "content" ? "Anotação" : "Detalhes";
+  $("#details").rows = category === "content" ? 12 : 3;
+  $("#details").placeholder = category === "content" ? "Escreva todos os detalhes, roteiro, legenda, referências e próximos passos..." : "";
+  $("#note-save-status").classList.toggle("hidden", category !== "content");
+  $("#note-save-status").textContent = appTarget ? "Alterações salvas automaticamente enquanto você escreve." : "A ideia ficará salva online depois do primeiro toque em Salvar ideia.";
   $("#date").value = category === "agenda" ? localDate() : "";
   if (category === "student") {
     $("#student-type-particular").checked = true;
@@ -225,6 +234,21 @@ function openDialog(category, appTarget = "") {
     $("#item-id").value = existing?.id || "";
     $("#url").value = existing?.url || "";
     $("#dialog-title").textContent = appTarget;
+  }
+  if (category === "content" && appTarget) {
+    const existing = state.items.find((item) => item.category === "content" && Number(item.id) === Number(appTarget));
+    if (existing) {
+      $("#item-id").value = existing.id;
+      $("#title").value = existing.title || "";
+      $("#details").value = existing.details || "";
+      $("#dialog-title").textContent = "Editar ideia";
+      $("#dialog-description").textContent = "Use como um bloco de anotações. Você pode ler e alterar o texto completo.";
+      $("#save").textContent = "Salvar alterações";
+    }
+  } else if (category === "content") {
+    $("#save").textContent = "Salvar ideia";
+  } else {
+    $("#save").textContent = "Salvar";
   }
   if (category === "class") {
     const existing = state.classes.find((group) => Number(group.id) === state.classTarget);
@@ -242,6 +266,11 @@ function openDialog(category, appTarget = "") {
 }
 
 document.addEventListener("click", async (event) => {
+  const note = event.target.closest("[data-open-note]");
+  if (note && !event.target.closest(".record-actions")) {
+    openDialog("content", note.dataset.openNote);
+    return;
+  }
   const button = event.target.closest("button");
   if (!button) return;
   if (button.dataset.view) setView(button.dataset.view);
@@ -274,6 +303,45 @@ document.addEventListener("click", async (event) => {
   }
 });
 
+document.addEventListener("keydown", (event) => {
+  const note = event.target.closest?.("[data-open-note]");
+  if (note && (event.key === "Enter" || event.key === " ")) {
+    event.preventDefault();
+    openDialog("content", note.dataset.openNote);
+  }
+});
+
+let noteSaveTimer;
+async function autosaveOpenNote() {
+  const category = $("#category").value;
+  const id = $("#item-id").value;
+  if (category !== "content" || !id) return;
+  const title = $("#title").value.trim();
+  const details = $("#details").value;
+  if (!title) {
+    $("#note-save-status").textContent = "Digite um título para salvar automaticamente.";
+    return;
+  }
+  clearTimeout(noteSaveTimer);
+  $("#note-save-status").textContent = "Salvando alterações online...";
+  noteSaveTimer = setTimeout(async () => {
+    try {
+      const data = await api(`/api/items/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ title, details }),
+      });
+      state.items = state.items.map((item) => Number(item.id) === Number(id) ? data.item : item);
+      $("#note-save-status").textContent = "Salvo online ✓";
+    } catch (error) {
+      $("#note-save-status").textContent = "Não foi possível salvar automaticamente.";
+      showError(error.message);
+    }
+  }, 700);
+}
+
+$("#title").addEventListener("input", autosaveOpenNote);
+$("#details").addEventListener("input", autosaveOpenNote);
+
 $(".dialog-close").addEventListener("click", () => $("#entry-dialog").close());
 $("#class-student-options").addEventListener("change", (event) => {
   if (!event.target.matches('input[type="checkbox"]')) return;
@@ -294,6 +362,7 @@ $("#logout").addEventListener("click", async () => {
 
 $("#entry-form").addEventListener("submit", async (event) => {
   event.preventDefault();
+  clearTimeout(noteSaveTimer);
   const submit = event.submitter;
   submit.disabled = true;
   submit.textContent = "Salvando...";
@@ -332,7 +401,10 @@ $("#entry-form").addEventListener("submit", async (event) => {
     $("#entry-dialog").close();
     await load();
   } catch (error) { showError(error.message); }
-  finally { submit.disabled = false; submit.textContent = "Salvar"; }
+  finally {
+    submit.disabled = false;
+    submit.textContent = category === "content" ? (id ? "Salvar alterações" : "Salvar ideia") : "Salvar";
+  }
 });
 
 function urlBase64ToUint8Array(base64String) {

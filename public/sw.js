@@ -1,5 +1,5 @@
-const CACHE = "painel-jb-render-horarios-v7";
-const SHELL = ["/", "/styles.css?v=horarios-7", "/app.js?v=horarios-7", "/icon.svg", "/manifest.webmanifest"];
+const CACHE = "painel-jb-render-notas-v8";
+const SHELL = ["/", "/styles.css?v=notas-8", "/app.js?v=notas-8", "/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
